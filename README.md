@@ -8,7 +8,7 @@
 
 - **训练计划** — 80/20 极化训练自动生成，支持减量周、周跑量递增、自定义强度配比
 - **仪表盘** — 恢复状态 (HRV)、VO₂max 趋势、训练负荷 (ATI/CTI)、睡眠分析
-- **COROS 同步** — 支持 OAuth、Cookie、MCP CLI 三种方式同步手表数据
+- **COROS 同步** — 支持 OAuth、Cookie、MCP CLI 三种方式同步手表数据。*Cookie 和 MCP CLI 方式使用了非官方接口，使用前请了解相关风险，建议优先使用 OAuth*
 - **AI 教练** — 多模型支持 (DeepSeek / Anthropic / OpenAI / Gemini)，可上传图片分析
 - **视频分析** — MediaPipe 姿态识别，分析跑步姿态
 - **赛事规划** — 基于近期成绩预测完赛时间，生成配速策略
