@@ -1,0 +1,33 @@
+# Secrets & credentials
+.env
+*.dat
+activation_server/codes.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Node
+node_modules/
+dist/
+
+# Database
+*.db
+
+# Uploads
+uploads/
+
+# Build artifacts
+build/
+pkg/
+*.spec.bak
+
+# IDE & OS
+.DS_Store
+Thumbs.db
+
+# Claude Code
+.superpowers/
+.claude/
+skills-lock.json

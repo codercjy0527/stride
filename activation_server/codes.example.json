@@ -1,0 +1,11 @@
+{
+  "codes": {
+    "DEMO-XXXX-XXXX-XXXX": {
+      "created": "2026-01-01",
+      "expires": "2027-01-01",
+      "max_bindings": 100,
+      "bindings": [],
+      "note": "示例激活码，请替换为真实数据"
+    }
+  }
+}

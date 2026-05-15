@@ -1,0 +1,15 @@
+fastapi>=0.116.0
+uvicorn[standard]>=0.34.0
+sqlalchemy>=2.0.36
+pydantic>=2.10.3
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+python-multipart>=0.0.19
+aiofiles>=24.1.0
+httpx>=0.28.1
+anthropic>=0.42.0
+coros-training-mcp>=0.2.0
+mediapipe>=0.10.30
+opencv-python>=4.10.0
+numpy>=2.0.0
+Pillow>=11.0.0

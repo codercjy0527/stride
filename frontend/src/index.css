@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #1A0A0A;
+  --color-brand-100: #2C1010;
+  --color-brand-200: #3D1515;
+  --color-brand-300: #5C1A1A;
+  --color-brand-400: #7A1E1E;
+  --color-brand-500: #991B1B;
+  --color-brand-600: #B91C1C;
+  --color-brand-700: #C53030;
+  --color-brand-800: #DC2626;
+  --color-brand-900: #F87171;
+
+  --color-accent-bronze: #A68A6B;
+  --color-accent-silver: #8A94A6;
+  --color-accent-gold: #C9A84C;
+
+  --color-surface: rgba(255, 255, 255, 0.03);
+  --color-surface-hover: rgba(255, 255, 255, 0.06);
+  --color-border-subtle: rgba(255, 255, 255, 0.05);
+  --color-border-default: rgba(255, 255, 255, 0.08);
+}
+
+/* Deeper, richer background */
+body {
+  @apply bg-[#090C10] text-[#E8ECF2] antialiased;
+  font-feature-settings: "tnum";
+}
+
+/* Refined glass card — more depth, subtle top-light */
+.glass-card {
+  background: rgba(255, 255, 255, 0.025);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025),
+    0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* Glass card with warm red tint — used for highlights */
+.glass-card-warm {
+  background: rgba(185, 28, 28, 0.02);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(185, 28, 28, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(185, 28, 28, 0.03),
+    0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* Data-dense card — slightly more opaque for readability */
+.glass-card-solid {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Scrollbar — thinner, more refined */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.06); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.12); }
+
+/* Input dark scheme */
+input, textarea, select {
+  color-scheme: dark;
+}
+
+/* Tabular numbers for all monospace data */
+.font-mono {
+  font-feature-settings: "tnum";
+}
+
+/* Toast slide-in animation */
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, -12px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+.toast-enter {
+  animation: toast-in 0.3s ease-out;
+}
