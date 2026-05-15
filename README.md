@@ -44,6 +44,9 @@ python -m venv venv
 venv\Scripts\activate      # Windows
 # source venv/bin/activate # macOS/Linux
 
+# 国内用户建议先换清华源（mediapipe 等大包更快）
+pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+
 # 安装依赖
 pip install -r requirements.txt
 
