@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { training } from '@/services/api'
-import type { TrainingPlan as TPlan, PlanCreate } from '@/types'
+import type { TrainingPlan as TPlan } from '@/types'
 import PlanSettingsModal from '@/components/training/PlanSettingsModal'
 import PlanCalendar from '@/components/training/PlanCalendar'
 
@@ -19,10 +19,9 @@ export default function TrainingPlan() {
 
   useEffect(() => { loadPlans() }, [])
 
-  const handleCreate = async (data: PlanCreate) => {
-    const res = await training.createPlan(data)
+  const handleCreate = (newPlan: TPlan) => {
     loadPlans()
-    setSelectedPlan(res.data)
+    setSelectedPlan(newPlan)
   }
 
   const handleDelete = async (id: number) => {

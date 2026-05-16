@@ -13,6 +13,9 @@ class SessionType(str, Enum):
     interval = "interval"
     long_run = "long_run"
     rest = "rest"
+    checkpoint = "checkpoint"
+    fartlek = "fartlek"
+    hills = "hills"
 
 
 class Intensity(str, Enum):
@@ -32,6 +35,11 @@ class TrainingPlan(Base):
     low_intensity_max: Mapped[int] = mapped_column(Integer, default=4)
     target_race: Mapped[str] = mapped_column(String(20), default="半马")
     target_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    philosophy: Mapped[str] = mapped_column(String(30), default="polarised_80_20")
+    fitness_level: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    recent_race_result: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    injury_notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    training_days_per_week: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     user = relationship("User", back_populates="training_plans")
@@ -51,5 +59,9 @@ class TrainingSession(Base):
     distance_km: Mapped[float] = mapped_column(Float, default=0.0)
     description: Mapped[str] = mapped_column(String(500), default="")
     completed: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_checkpoint: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_blind_run: Mapped[bool] = mapped_column(Boolean, default=False)
+    checkpoint_result_sec: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    checkpoint_notes: Mapped[str | None] = mapped_column(String(300), nullable=True)
 
     plan = relationship("TrainingPlan", back_populates="sessions")

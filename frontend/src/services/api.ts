@@ -16,6 +16,16 @@ export const training = {
     api.post(`/training-plans/${id}/generate`, null, { params: { base_weekly_km: baseWeeklyKm } }),
   listSessions: (planId: number) => api.get(`/training-plans/${planId}/sessions`),
   toggleComplete: (sessionId: number) => api.put(`/sessions/${sessionId}/complete`),
+  // Guardrail system
+  listPhilosophies: () => api.get('/philosophies'),
+  createFromQuestionnaire: (data: import('@/types').QuestionnaireInput) =>
+    api.post('/training-plans/questionnaire', data),
+  submitCheckpoint: (sessionId: number, data: import('@/types').CheckpointResult) =>
+    api.post(`/sessions/${sessionId}/checkpoint`, data),
+  getCheckpointAnalysis: (planId: number, week: number) =>
+    api.get(`/training-plans/${planId}/checkpoint/${week}`),
+  getCheckpointAIAnalysis: (planId: number, week: number, provider = 'deepseek', apiKey = '', model = '') =>
+    api.post(`/training-plans/${planId}/checkpoint/${week}/ai`, { provider, api_key: apiKey, model }),
 }
 
 // Checkin
@@ -42,10 +52,20 @@ export const ai = {
 
 // Video
 export const video = {
-  analyze: (file: File) => {
+  analyze: (file: File, viewAngle: import('@/types').ViewAngle = 'side') => {
     const fd = new FormData()
     fd.append('video', file)
+    fd.append('view_angle', viewAngle)
     return api.post('/video/analyze', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+  },
+  analyzeBarefoot: (file: File, shodKey: string, viewAngle: import('@/types').ViewAngle = 'side') => {
+    const fd = new FormData()
+    fd.append('video', file)
+    fd.append('shod_video_key', shodKey)
+    fd.append('view_angle', viewAngle)
+    return api.post('/video/analyze/barefoot', fd, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
   },

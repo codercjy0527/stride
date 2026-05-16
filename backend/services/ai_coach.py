@@ -12,6 +12,7 @@ from db.training import TrainingPlan
 from db.checkin import DailyCheckin
 from db.metrics import FitnessMetrics
 from db.activity import ActivityRecord
+from services.philosophies import get_philosophy
 
 logger = logging.getLogger(__name__)
 
@@ -660,17 +661,33 @@ def _build_structured_context(user: User, db: Session) -> str:
         sections.append("\n".join(lines))
 
     # ── Layer 2: Training Plans ──
+    from db.training import TrainingSession as TS
+    from services.philosophies import get_philosophy as gp
     plans = db.query(TrainingPlan).filter(TrainingPlan.user_id == user.id).all()
     if plans:
         lines = ["## 当前训练计划"]
         for plan in plans:
             sessions = plan.sessions or []
             completed = sum(1 for s in sessions if s.completed)
-            total = len([s for s in sessions if getattr(s, "session_type", None) and
-                         getattr(s.session_type, "value", None) != "rest"])
+            total = len([s for s in sessions if hasattr(s, 'session_type') and
+                         s.session_type.value != "rest"])
             pct = round(completed / max(total, 1) * 100)
-            lines.append(f"- {plan.name}: {plan.weeks}周, 目标{plan.target_race}, "
+
+            ph = plan.philosophy if hasattr(plan, 'philosophy') and plan.philosophy else "polarised_80_20"
+            ph_profile = gp(ph)
+            ph_name = ph_profile.name if ph_profile else "80/20极化训练"
+
+            lines.append(f"- {plan.name}: {plan.weeks}周, {ph_name}, 目标{plan.target_race}, "
                           f"完成 {completed}/{total} ({pct}%)")
+
+            # Checkpoint results
+            checkpoints = [s for s in sessions if hasattr(s, 'is_checkpoint') and s.is_checkpoint and s.checkpoint_result_sec]
+            if checkpoints:
+                lines.append("  检查点记录:")
+                for cp in sorted(checkpoints, key=lambda x: x.week):
+                    result = f"{cp.checkpoint_result_sec // 60}:{cp.checkpoint_result_sec % 60:02d}"
+                    lines.append(f"    第{cp.week}周: {result}")
+
         sections.append("\n".join(lines))
 
     # ── Layer 3: Recent Activities ──
@@ -752,6 +769,118 @@ def _build_context_summary(coros: dict) -> str:
         parts.append(f"⚠️ {', '.join(warnings)}")
 
     return " | ".join(parts) if parts else ""
+
+
+# ── Checkpoint Analysis ──
+
+CHECKPOINT_SYSTEM_PROMPT = """你是一位遵循「护栏约束模式」的跑步教练。当前用户刚完成了一次检查点测试。
+
+## 分析规则
+1. 对比本次成绩和上次成绩，判断趋势（进步/退步/平台）
+2. 你可以建议调整以下变量中的 **仅一个**：
+   - weekly_volume（周跑量）
+   - intensity_distribution（强度配比）
+   - long_run_distance（长距离距离）
+   - recovery_days（恢复天数）
+   - session_pace（训练配速）
+3. **严禁**建议更换训练哲学
+4. 如果恢复指标（HRV/RHR/睡眠）有异常，优先建议降低训练负荷
+5. 给出具体的调整幅度（例如"下周跑量降低 10%"，而不只是"降低跑量"）
+
+## 输出格式
+1. 检查点成绩对比（一句话）
+2. 趋势判断 + 可能的短板
+3. 推荐调整的一个变量 + 具体幅度
+4. 调整后的预期效果
+
+用中文回答，保持煜煜子的猫系风格喵~"""
+
+
+async def analyze_checkpoint(
+    user: User,
+    plan: TrainingPlan,
+    checkpoint_week: int,
+    current_result_sec: int,
+    previous_result_sec: int | None,
+    delta_pct: float | None,
+    trend: str,
+    db: Session,
+    provider: str = "deepseek",
+    api_key: str = "",
+    model: str = "",
+) -> str:
+    """用AI分析检查点测试结果，给出单变量调整建议"""
+    philosophy = get_philosophy(plan.philosophy or "polarised_80_20")
+    ph_label = philosophy.name if philosophy else "80/20 极化训练"
+
+    delta_text = ""
+    if previous_result_sec and delta_pct is not None:
+        direction = "快于" if delta_pct > 0 else "慢于"
+        prev_str = f"{previous_result_sec // 60}:{previous_result_sec % 60:02d}"
+        curr_str = f"{current_result_sec // 60}:{current_result_sec % 60:02d}"
+        delta_text = f"上次: {prev_str} | 本次: {curr_str} | {direction}上次 {abs(delta_pct)}%"
+
+    user_msg = f"""## 检查点分析 - 第{checkpoint_week}周
+
+训练哲学: {ph_label}
+体能水平: {plan.fitness_level or '未知'}
+近期成绩: {plan.recent_race_result or '未提供'}
+伤病备注: {plan.injury_notes or '无'}
+
+检查点结果:
+- 趋势: {trend}
+- {delta_text}
+
+请分析这次检查点的结果，并根据护栏约束模式给出单变量调整建议。"""
+
+    context = _build_structured_context(user, db)
+    full_system = f"{CHECKPOINT_SYSTEM_PROMPT}\n\n## 用户训练数据\n{context if context else '暂无数据'}"
+
+    if provider == "deepseek":
+        key = api_key or DEEPSEEK_API_KEY
+        if key:
+            return await _call_deepseek(full_system, user_msg, key, model)
+    elif provider == "claude":
+        key = api_key or ANTHROPIC_API_KEY
+        if key:
+            return await _call_claude(full_system, user_msg, key, model)
+    elif provider == "openai":
+        key = api_key or OPENAI_API_KEY
+        if key:
+            return await _call_openai(full_system, user_msg, key, model)
+    elif provider == "gemini":
+        key = api_key or GOOGLE_API_KEY
+        if key:
+            return await _call_gemini(full_system, user_msg, key, model)
+
+    return _fallback_checkpoint_reply(trend, delta_text, plan.philosophy or "polarised_80_20")
+
+
+def _fallback_checkpoint_reply(trend: str, delta_text: str, philosophy_key: str) -> str:
+    """无API Key时的检查点分析回退"""
+    trend_labels = {
+        "improving": "在进步",
+        "declining": "有所退步",
+        "plateauing": "处于平台期",
+        "baseline": "是第一个检查点",
+    }
+    advice = {
+        "improving": "继续保持当前训练节奏，不急着加量喵~ 先巩固适应再考虑微调。",
+        "declining": "建议先降低 10% 周跑量或增加一天恢复日。HRV 下降是身体在说话喵~",
+        "plateauing": "可以尝试调整一次强度课的配速（比当前快 5s/km），给身体新的刺激。",
+        "baseline": "第一个检查点作为基准线。接下来4周保持训练一致性是最重要的事喵~",
+    }
+    return f"""## 检查点分析
+
+{delta_text or '首次检查点 - 建立基准线'}
+
+趋势: {trend_labels.get(trend, trend)}
+
+### 建议
+{advice.get(trend, '请保持训练一致性。')}
+
+---
+*提示：配置 API Key 后可获得 AI 教练的详细分析喵~*"""
 
 
 # ── Main Chat Functions ──

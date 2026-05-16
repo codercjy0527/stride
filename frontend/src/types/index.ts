@@ -6,7 +6,7 @@ export interface User {
 }
 
 // Training
-export type SessionType = 'easy' | 'tempo' | 'interval' | 'long_run' | 'rest'
+export type SessionType = 'easy' | 'tempo' | 'interval' | 'long_run' | 'rest' | 'checkpoint' | 'fartlek' | 'hills'
 export type Intensity = 'low' | 'high'
 
 export interface TrainingPlan {
@@ -19,6 +19,11 @@ export interface TrainingPlan {
   low_intensity_max: number
   target_race: string
   target_date: string | null
+  philosophy?: string
+  fitness_level?: string
+  recent_race_result?: string
+  injury_notes?: string
+  training_days_per_week?: number
   total_sessions: number
   completed_sessions: number
 }
@@ -34,6 +39,10 @@ export interface TrainingSession {
   distance_km: number
   description: string
   completed: boolean
+  is_checkpoint: boolean
+  is_blind_run: boolean
+  checkpoint_result_sec: number | null
+  checkpoint_notes: string | null
 }
 
 export interface PlanCreate {
@@ -45,6 +54,48 @@ export interface PlanCreate {
   target_race: string
   target_date?: string
   base_weekly_km: number
+  philosophy?: string
+}
+
+// ── 护栏约束模式新增 ──
+
+export interface Philosophy {
+  key: string
+  name: string
+  description: string
+  intensity_ratio: string
+  weekly_mileage_cap: number
+  high_max: number
+  checkpoint_interval: number
+}
+
+export interface QuestionnaireInput {
+  fitness_level: string
+  training_days_per_week: number
+  recent_race_result?: string
+  injury_notes?: string
+  name: string
+  weeks: number
+  weekly_mileage_cap: number
+  philosophy: string
+  target_race: string
+  target_date?: string
+  base_weekly_km: number
+}
+
+export interface CheckpointAnalysis {
+  week: number
+  current_result_sec: number | null
+  previous_result_sec: number | null
+  delta_pct: number | null
+  previous_week: number | null
+  trend: 'baseline' | 'improving' | 'declining' | 'plateauing'
+  available_variables: string[]
+}
+
+export interface CheckpointResult {
+  result_seconds: number
+  notes?: string
 }
 
 // Checkin
@@ -179,4 +230,47 @@ export interface ReviewResult {
   sections: ReviewSection[]
   comparison: ReviewComparison
   offline?: boolean
+}
+
+// Pose Analysis
+export type ViewAngle = 'side' | 'rear' | 'front'
+
+export interface PoseMetric {
+  value: number | null
+  label: string
+  status: 'good' | 'info' | 'warning' | 'unknown'
+  detail: string
+}
+
+export interface ChainGroup {
+  level: string
+  items: PoseMetric[]
+  rationale: string
+}
+
+export interface PoseAnalysisResult {
+  view_angle: string
+  cadence: number
+  ground_contact_time: number
+  vertical_oscillation: number
+  foot_strike: PoseMetric
+  knee_valgus: PoseMetric
+  hip_drop: PoseMetric
+  arm_cross: PoseMetric
+  shoulder_rotation: PoseMetric
+  head_stability: PoseMetric
+  trunk_lean: number
+  chain_analysis: {
+    groups: ChainGroup[]
+    lower_count: number
+    core_count: number
+    upper_count: number
+  }
+  score: number
+  error?: string
+}
+
+export interface PoseComparison {
+  differences: { metric: string; shod: number; barefoot: number; delta: number; unit: string }[]
+  insights: string[]
 }
